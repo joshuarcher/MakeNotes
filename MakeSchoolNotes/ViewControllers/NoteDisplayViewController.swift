@@ -7,13 +7,42 @@
 //
 
 import UIKit
+import RealmSwift
 
 class NoteDisplayViewController: UIViewController {
 
+    @IBOutlet weak var titleTextField: UITextField!
+    @IBOutlet weak var contentTextView: UITextView!
+    
+    @IBOutlet weak var deleteButton: UIBarButtonItem!
+    @IBOutlet weak var toolbarBottomSpace: NSLayoutConstraint!
+    
+    
+    var note: Note? {
+        didSet {
+            displayNote(note)
+        }
+    }
+    
+    var edit = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        displayNote(self.note)
+        
+        titleTextField.returnKeyType = .Next
+        titleTextField.delegate = self
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        saveNote()
     }
 
     override func didReceiveMemoryWarning() {
@@ -21,6 +50,36 @@ class NoteDisplayViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    // MARK: - Helper Methods
+    
+    func displayNote(note: Note?) {
+        if let note = note, titleTextField = titleTextField, contentTextView = contentTextView  {
+            titleTextField.text = note.title
+            contentTextView.text = note.content
+            
+            if note.title.characters.count == 0 && note.content.characters.count == 0 {
+                titleTextField.becomeFirstResponder()
+            }
+        }
+    }
+    
+    func saveNote() {
+        if let note = note {
+            do {
+                let realm = try Realm()
+                
+                try realm.write() {
+                    if (note.title != self.titleTextField.text || note.content != self.contentTextView.text) {
+                        note.title = self.titleTextField.text!
+                        note.content = self.contentTextView.text
+                        note.modificationDate = NSDate()
+                    }
+                }
+            } catch {
+                print("handle error")
+            }
+        }
+    }
 
     /*
     // MARK: - Navigation
@@ -32,4 +91,17 @@ class NoteDisplayViewController: UIViewController {
     }
     */
 
+}
+
+extension NoteDisplayViewController: UITextFieldDelegate {
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        
+        if (textField == titleTextField) {  //1
+            contentTextView.returnKeyType = .Done
+            contentTextView.becomeFirstResponder()
+        }
+        
+        return false
+    }
 }

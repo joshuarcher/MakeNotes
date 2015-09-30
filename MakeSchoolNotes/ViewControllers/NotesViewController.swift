@@ -26,14 +26,17 @@ class NotesViewController: UITableViewController {
         tableView.dataSource = self
         tableView.delegate = self
         
+        // Do any additional setup after loading the view, typically from a nib.
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
         do {
             let realm = try Realm()
             notes = realm.objects(Note).sorted("modificationDate", ascending: false)
         } catch {
             print("handle error")
         }
-        
-        // Do any additional setup after loading the view, typically from a nib.
     }
     
     @IBAction func unwindToSegue(segue: UIStoryboardSegue) {
@@ -50,7 +53,7 @@ class NotesViewController: UITableViewController {
                     let source = segue.sourceViewController as! NewNoteViewController
                     
                     try realm.write() {
-                        realm.add(source.newNote!)
+                        realm.add(source.currentNote!)
                     }
                     
                 case "Delete":
@@ -60,7 +63,7 @@ class NotesViewController: UITableViewController {
                     }
                     
                     let source = segue.sourceViewController as! NoteDisplayViewController
-                    // source.note = nil
+                    source.note = nil
                     
                 default:
                     print("nobody likes \(identifier)")
@@ -81,7 +84,7 @@ class NotesViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    // Mark -- Helper functions
+    // MARK: - Helper functions
     
     func deleteNote(note: Note, realm: Realm) {
         
@@ -93,6 +96,15 @@ class NotesViewController: UITableViewController {
             print("handle error")
         }
         
+    }
+    
+    // MARK: - Navigation
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if (segue.identifier == "ShowExistingNote") {
+            let noteViewController = segue.destinationViewController as! NoteDisplayViewController
+            noteViewController.note = selectedNote
+        }
     }
     
   
